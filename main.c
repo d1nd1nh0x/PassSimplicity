@@ -1,14 +1,14 @@
 #include <stdio.h>
-#include <stdlib.h> // rand() e srand()
-#include <time.h>   // time(0)
-#include <string.h> // strcpy
+#include <stdlib.h> 
+#include <time.h>   
+#include <string.h> 
 
 // Defines
-#define LGTH_MAX 16 // largura máxima
+#define LGTH_MAX 16
 
 // Structs
 typedef struct {
-    char value[LGTH_MAX + 1]; // senha com 16 caracteres + 1 (\0)
+    char value[LGTH_MAX + 1]; 
     short length;
     short hasUppercase;
     short hasNumbers;
@@ -16,54 +16,72 @@ typedef struct {
     short strength;
 } PasswordData;
 
-// Funções e procedimentos
+// Funções
 void displayWelcomePrompt();
-void displayGeneratedPassword(const char *auth);
-void generateBaseString(PasswordData *auth);
-void addSpecialCharacters(PasswordData *auth);
-void addUppercaseLetters(PasswordData *auth);
+void displayGeneratedPassword(const PasswordData *auth);
+void generatePassword(PasswordData *auth);
 
 int main(void) {
-    PasswordData authPassword = {0}; // Inicializando com valores padrão
-    displayWelcomePrompt();          // Exibindo mensagem inicial
+    #ifdef WIN32
+        system("chcp 65001");
+        system("cls");
+    #endif
 
-    generateBaseString(&authPassword);
-    addUppercaseLetters(&authPassword);
-    addSpecialCharacters(&authPassword);
+    PasswordData authPassword = {0};
+    srand((unsigned) time(NULL));
 
-    printf("Senha gerada: %s\n", authPassword.value);
+    displayWelcomePrompt();
+    generatePassword(&authPassword);
+    displayGeneratedPassword(&authPassword);
 
     return 0;
 }
 
-// Procedimentos
 void displayWelcomePrompt() {
-    printf("Bem-Vindo\nPressione ENTER para gerar sua senha segura!\n$> ");
+    printf("Bem-vindo!\nPressione ENTER para gerar sua senha segura!\n$> ");
     while (getchar() != '\n');
 }
 
-// Funções
-void generateBaseString(PasswordData *auth) {
-    char alphabetic[] = "abcdefghijklmnopqrstuvwxyz";
-    srand(time(0));
+void displayGeneratedPassword(const PasswordData *auth) {
+    printf("\nSenha Gerada: %s\n", auth->value);
+    puts("================================");
+    printf("Tamanho da senha: %d\n", auth->length);
+    printf("Contém caracteres especiais: %s\n", auth->hasSymbols ? "Sim" : "Não");
+    printf("Contém caracteres maiúsculos: %s\n", auth->hasUppercase ? "Sim" : "Não");
+    printf("Contém caracteres numéricos: %s\n", auth->hasNumbers ? "Sim" : "Não");
+    printf("Potência da senha: %s\n", auth->strength > 9 ? "Forte" : "Fraca");
+}
+
+void generatePassword(PasswordData *auth) {
+    static const char lowercase[] = "abcdefghijklmnopqrstuvwxyz";
+    static const char uppercase[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    static const char symbols[] = "*&$#!";
+    static const char numbers[] = "0123456789";
+
+    // Preencher com caracteres aleatórios base
     for (short i = 0; i < LGTH_MAX; i++) {
-        auth->value[i] = alphabetic[rand() % 26];
+        auth->value[i] = lowercase[rand() % strlen(lowercase)];
     }
     auth->value[LGTH_MAX] = '\0';
-}
+    auth->length = LGTH_MAX;
+    auth->strength += 3;
 
-void addUppercaseLetters(PasswordData *auth) {
-    char alphabetic[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    // Adicionar maiúsculas, números e símbolos
     for (short i = 0; i < 3; i++) {
-        short iRand = rand() % LGTH_MAX;
-        auth->value[iRand] = alphabetic[rand() % 26];
+        auth->value[rand() % LGTH_MAX] = uppercase[rand() % strlen(uppercase)];
     }
-}
+    auth->hasUppercase = 1;
+    auth->strength += 3;
 
-void addSpecialCharacters(PasswordData *auth) {
-    char symbols[] = "*&$#!";
-    for (short i = 0; i < 5; i++) {
-        short iRand = rand() % LGTH_MAX;
-        auth->value[iRand] = symbols[rand() % 5];
+    for (short i = 0; i < 3; i++) {
+        auth->value[rand() % LGTH_MAX] = numbers[rand() % strlen(numbers)];
     }
+    auth->hasNumbers = 1;
+    auth->strength += 3;
+
+    for (short i = 0; i < 3; i++) {
+        auth->value[rand() % LGTH_MAX] = symbols[rand() % strlen(symbols)];
+    }
+    auth->hasSymbols = 1;
+    auth->strength += 3;
 }
